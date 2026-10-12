@@ -1,40 +1,47 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
-// 1. Initializing the global Drawing state channel
 const DrawingContext = createContext();
 
-// 2. The Provider component wrapping our drawing board workspace
 export function DrawingProvider({ children }) {
-  // State tracking the active drawing selection tool ('LINE', 'CIRCLE', 'RECTANGLE', 'SELECT')
-  const [activeTool, setActiveTool] = useState('LINE');
+  const [activeMode, setActiveMode] = useState('LINE');
+  const [telemetry, setTelemetry] = useState({ x: 0, y: 0 });
+  const [vectorCount, setVectorCount] = useState(0);
   
-  // Telemetry state to monitor live mouse coordinates
-  const [pointerCoordinates, setPointerCoordinates] = useState({ x: 0, y: 0 });
+  // 🟢 FIXED: The master vector list lives here now so all components can access it safely!
+  const [shapesHistory, setShapesHistory] = useState([]);
 
-  // Function to update coordinates on high-frequency mouse movements
   const updateTelemetry = (x, y) => {
-    setPointerCoordinates({ x: Math.round(x), y: Math.round(y) });
+    setTelemetry({ x, y });
   };
 
-  // Reset operation tool setting back to default select mode
-  const resetActiveTool = () => {
-    setActiveTool('SELECT');
+  const incrementVectorCount = () => {
+    setVectorCount((prev) => prev + 1);
+  };
+
+  const clearGlobalWorkspace = () => {
+    setShapesHistory([]);
+    setVectorCount(0);
   };
 
   return (
-    <DrawingContext.Provider value={{
-      activeTool,
-      setActiveTool,
-      pointerCoordinates,
-      updateTelemetry,
-      resetActiveTool
-    }}>
+    <DrawingContext.Provider
+      value={{
+        activeMode,
+        setActiveMode,
+        telemetry,
+        updateTelemetry,
+        vectorCount,
+        incrementVectorCount,
+        shapesHistory,
+        setShapesHistory,
+        clearGlobalWorkspace
+      }}
+    >
       {children}
     </DrawingContext.Provider>
   );
 }
 
-// 3. Custom hook wrapper for immediate extraction across layout modules
 export function useDrawing() {
   return useContext(DrawingContext);
 }

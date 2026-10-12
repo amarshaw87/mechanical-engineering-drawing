@@ -6,29 +6,24 @@ export default function DrawingSheet() {
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
-  // 1. Extract values safely from your Global Context
-  const contextData = useDrawing() || {};
-  const activeMode = contextData.activeMode || 'LINE';
-  const updateTelemetry = contextData.updateTelemetry || (() => {});
-  const incrementVectorCount = contextData.incrementVectorCount || (() => {});
+  // Access global CAD configuration parameters from React state stream context
+  const { activeMode, updateTelemetry, incrementVectorCount } = useDrawing();
   
-  // 2. Extract tools safely from your Drawing Engine Hook
-  const engine = useDrawingEngine() || {};
-  const setShapes = engine.setShapes || engine.setShapesHistory || (() => {});
-  const currentDraftShapeRef = engine.currentDraftShapeRef || { current: null };
-  const drawAllVectorsToCanvas = engine.drawAllVectorsToCanvas;
+  // Initialize calculations logic from your mathematical engine hook pipeline
+  const { 
+    shapesHistory,
+    setShapesHistory, 
+    currentDraftShapeRef, 
+    drawAllVectorsToCanvas 
+  } = useDrawingEngine();
 
-  // 3. FIX THE LOOP: Use a single, simplified useEffect to draw on the canvas
+  // WATCH FIX: Watch history array directly instead of tracking the drawing engine function itself
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || typeof drawAllVectorsToCanvas !== 'function') return;
-    
+    if (!canvas) return;
     const context = canvas.getContext('2d');
-    if (context) {
-      drawAllVectorsToCanvas(context);
-    }
-    // We only trigger updates based on raw list mutations, breaking the loop!
-  }, [engine.shapes, engine.shapesHistory]);
+    drawAllVectorsToCanvas(context);
+  }, [shapesHistory]); // Safe boundary watch execution 
 
   const handleMouseDown = (e) => {
     const canvas = canvasRef.current;
@@ -51,9 +46,7 @@ export default function DrawingSheet() {
     updateTelemetry(calibratedX, calibratedY);
     
     const context = canvas.getContext('2d');
-    if (context && typeof drawAllVectorsToCanvas === 'function') {
-      drawAllVectorsToCanvas(context);
-    }
+    drawAllVectorsToCanvas(context);
   };
 
   const handleMouseMove = (e) => {
@@ -66,7 +59,7 @@ export default function DrawingSheet() {
 
     updateTelemetry(calibratedX, calibratedY);
 
-    if (!isDrawing || !currentDraftShapeRef.current) return;
+    if (!isDrawing) return;
 
     currentDraftShapeRef.current = {
       ...currentDraftShapeRef.current,
@@ -75,9 +68,7 @@ export default function DrawingSheet() {
     };
 
     const context = canvas.getContext('2d');
-    if (context && typeof drawAllVectorsToCanvas === 'function') {
-      drawAllVectorsToCanvas(context);
-    }
+    drawAllVectorsToCanvas(context);
   };
 
   const handleMouseUp = () => {
@@ -85,7 +76,7 @@ export default function DrawingSheet() {
     setIsDrawing(false);
 
     if (currentDraftShapeRef.current) {
-      setShapes((prev) => [...(prev || []), currentDraftShapeRef.current]);
+      setShapesHistory((prev) => [...prev, currentDraftShapeRef.current]);
       incrementVectorCount();
       currentDraftShapeRef.current = null;
     }

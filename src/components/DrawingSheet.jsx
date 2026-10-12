@@ -5,38 +5,40 @@ import useDrawingEngine from '../hooks/useDrawingEngine';
 export default function DrawingSheet() {
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
 
-  // Pull functions directly from your Context Provider
-  const { activeMode, updateTelemetry, incrementVectorCount } = useDrawing();
+  // 1. Extract values safely from your Global Context
+  const contextData = useDrawing() || {};
+  const activeMode = contextData.activeMode || 'LINE';
+  const updateTelemetry = contextData.updateTelemetry || (() => {});
+  const incrementVectorCount = contextData.incrementVectorCount || (() => {});
   
-  // Pull functions directly from your Drawing Engine Hook
-  const { 
-    shapes,              // Matched to your exact variable name
-    setShapes,           // Matched to your exact variable name
-    currentDraftShapeRef, 
-    drawAllVectorsToCanvas 
-  } = useDrawingEngine();
+  // 2. Extract tools safely from your Drawing Engine Hook
+  const engine = useDrawingEngine() || {};
+  const setShapes = engine.setShapes || engine.setShapesHistory || (() => {});
+  const currentDraftShapeRef = engine.currentDraftShapeRef || { current: null };
+  const drawAllVectorsToCanvas = engine.drawAllVectorsToCanvas;
 
-  // Redraw the canvas whenever your shapes database changes
+  // 3. FIX THE LOOP: Use a single, simplified useEffect to draw on the canvas
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || typeof drawAllVectorsToCanvas !== 'function') return;
+    
     const context = canvas.getContext('2d');
-    drawAllVectorsToCanvas(context);
-  }, [shapes, drawAllVectorsToCanvas]); // Redraw on shape changes
+    if (context) {
+      drawAllVectorsToCanvas(context);
+    }
+    // We only trigger updates based on raw list mutations, breaking the loop!
+  }, [engine.shapes, engine.shapesHistory]);
 
   const handleMouseDown = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Calculate canvas bounding area to fix the coordinate offset bug
     const rect = canvas.getBoundingClientRect();
     const calibratedX = e.clientX - rect.left;
     const calibratedY = e.clientY - rect.top;
 
     setIsDrawing(true);
-    setStartPos({ x: calibratedX, y: calibratedY });
 
     currentDraftShapeRef.current = {
       type: activeMode,
@@ -49,7 +51,9 @@ export default function DrawingSheet() {
     updateTelemetry(calibratedX, calibratedY);
     
     const context = canvas.getContext('2d');
-    drawAllVectorsToCanvas(context);
+    if (context && typeof drawAllVectorsToCanvas === 'function') {
+      drawAllVectorsToCanvas(context);
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -60,10 +64,9 @@ export default function DrawingSheet() {
     const calibratedX = e.clientX - rect.left;
     const calibratedY = e.clientY - rect.top;
 
-    // Send coordinates to the dark telemetry monitor screen block
     updateTelemetry(calibratedX, calibratedY);
 
-    if (!isDrawing) return;
+    if (!isDrawing || !currentDraftShapeRef.current) return;
 
     currentDraftShapeRef.current = {
       ...currentDraftShapeRef.current,
@@ -72,7 +75,9 @@ export default function DrawingSheet() {
     };
 
     const context = canvas.getContext('2d');
-    drawAllVectorsToCanvas(context);
+    if (context && typeof drawAllVectorsToCanvas === 'function') {
+      drawAllVectorsToCanvas(context);
+    }
   };
 
   const handleMouseUp = () => {
@@ -80,10 +85,8 @@ export default function DrawingSheet() {
     setIsDrawing(false);
 
     if (currentDraftShapeRef.current) {
-      // Add the finished draft into your shape history array
-      setShapes((prev) => [...prev, currentDraftShapeRef.current]);
+      setShapes((prev) => [...(prev || []), currentDraftShapeRef.current]);
       incrementVectorCount();
-      
       currentDraftShapeRef.current = null;
     }
   };

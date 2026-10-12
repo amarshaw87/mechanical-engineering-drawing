@@ -1,76 +1,119 @@
-import { useState, useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { useDrawing } from '../context/DrawingContext';
+import useDrawingEngine from '../hooks/useDrawingEngine';
 
-export default function useDrawingEngine() {
-  // 1. Array state holding the master list of all permanently drawn geometric shapes
-  const [shapesHistory, setShapesHistory] = useState([]);
+export default function DrawingSheet() {
+  const canvasRef = useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+
+  // Access global CAD configuration parameters from React state stream context
+  const { activeMode, updateTelemetry, incrementVectorCount } = useDrawing();
   
-  // 2. Ref tracking temporary drawing shapes during an active drag-and-draw mouse sequence
-  // Using useRef here stops React from lagging your computer on every single pixel movement
-  const currentDraftShapeRef = useRef(null);
+  // Initialize calculations logic from your mathematical engine hook pipeline
+  const { 
+    setShapesHistory, 
+    currentDraftShapeRef, 
+    drawAllVectorsToCanvas 
+  } = useDrawingEngine();
 
-  // 3. Clear the whole drawing database matrix workspace back to zero
-  const clearCanvasVectorGrid = () => {
-    setShapesHistory([]);
-    currentDraftShapeRef.current = null;
+  // Watch for history array database adjustments to update pixels instantly
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext('2d');
+    drawAllVectorsToCanvas(context);
+  }, [drawAllVectorsToCanvas]);
+
+  // Handle initial mouse click (Vector Start Anchor)
+  const handleMouseDown = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // FIX: Calculate boundaries relative strictly to your grid canvas container box
+    const rect = canvas.getBoundingClientRect();
+    const calibratedX = e.clientX - rect.left;
+    const calibratedY = e.clientY - rect.top;
+
+    setIsDrawing(true);
+    setStartPos({ x: calibratedX, y: calibratedY });
+
+    // Initialize temporary blueprint line properties
+    currentDraftShapeRef.current = {
+      type: activeMode,
+      startX: calibratedX,
+      startY: calibratedY,
+      endX: calibratedX,
+      endY: calibratedY,
+    };
+
+    updateTelemetry(calibratedX, calibratedY);
+    
+    // Draw initial click reference point
+    const context = canvas.getContext('2d');
+    drawAllVectorsToCanvas(context);
   };
 
-  // 4. Mathematical Engine Pipeline: Loops and redraws the whiteboard viewport instantly
-  const drawAllVectorsToCanvas = (context2D) => {
-    if (!context2D) return;
+  // Handle active mouse movement (Dashed Drafting Preview Paths)
+  const handleMouseMove = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    // Clear the pixel screen buffer entirely before drawing updates
-    const canvasElement = context2D.canvas;
-    context2D.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    // FIX: Calibrate current positions by subtracting outside margins and layouts
+    const rect = canvas.getBoundingClientRect();
+    const calibratedX = e.clientX - rect.left;
+    const calibratedY = e.clientY - rect.top;
 
-    // Set professional drafting pen styling profiles
-    context2D.strokeStyle = '#1e293b'; // Dark blue-gray charcoal lines
-    context2D.lineWidth = 2;
-    context2D.lineCap = 'round';
+    // Update real-time telemetry positions in the dark monitor control block
+    updateTelemetry(calibratedX, calibratedY);
 
-    // A. Cycle and redraw every shape stored in our historical vector list array
-    shapesHistory.forEach((shape) => {
-      drawIndividualPrimitive(context2D, shape);
-    });
+    if (!isDrawing) return;
 
-    // B. Draw our current mouse drag preview shape on top if one is active
+    // Update coordinates for dynamic calculations (Radius / Width Matrix)
+    currentDraftShapeRef.current = {
+      ...currentDraftShapeRef.current,
+      endX: calibratedX,
+      endY: calibratedY,
+    };
+
+    const context = canvas.getContext('2d');
+    drawAllVectorsToCanvas(context);
+  };
+
+  // Handle mouse release (Commit Permanent Shape Object Vector)
+  const handleMouseUp = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+
     if (currentDraftShapeRef.current) {
-      context2D.strokeStyle = '#2563eb'; // Bright blue vector highlight pen for active drafts
-      context2D.setLineDash([4, 4]); // Use dashed line formatting for active previews
-      drawIndividualPrimitive(context2D, currentDraftShapeRef.current);
-      context2D.setLineDash([]); // Reset line formatting back to solid parameters
+      // Append completed draft primitive into historical vector database array
+      setShapesHistory((prev) => [...prev, currentDraftShapeRef.current]);
+      incrementVectorCount();
+      
+      // Flush draft layer memory to prepare for next shape initialization
+      currentDraftShapeRef.current = null;
     }
   };
 
-  // Helper routine containing explicit raw coordinate matrix math algorithms
-  const drawIndividualPrimitive = (ctx, shape) => {
-    ctx.beginPath();
-    
-    if (shape.type === 'LINE') {
-      ctx.moveTo(shape.startX, shape.startY);
-      ctx.lineTo(shape.endX, shape.endY);
-    } 
-    else if (shape.type === 'CIRCLE') {
-      // Euclidean Distance formula to calculate precise radius from starting vector anchor
-      const radius = Math.sqrt(
-        Math.pow(shape.endX - shape.startX, 2) + 
-        Math.pow(shape.endY - shape.startY, 2)
-      );
-      ctx.arc(shape.startX, shape.startY, radius, 0, 2 * Math.PI);
-    } 
-    else if (shape.type === 'RECTANGLE') {
-      const width = shape.endX - shape.startX;
-      const height = shape.endY - shape.startY;
-      ctx.rect(shape.startX, shape.startY, width, height);
-    }
-    
-    ctx.stroke();
-  };
-
-  return {
-    shapesHistory,
-    setShapesHistory,
-    currentDraftShapeRef,
-    clearCanvasVectorGrid,
-    drawAllVectorsToCanvas
-  };
+  return (
+    <div className="flex justify-center my-6">
+      <div className="relative border border-slate-200 rounded-lg shadow-inner bg-white overflow-hidden">
+        {/* HTML5 CAD Drawing Sheet Grid */}
+        <canvas
+          ref={canvasRef}
+          width={800}
+          height={450}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          className="cursor-crosshair block"
+          style={{
+            backgroundImage: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+      </div>
+    </div>
+  );
 }

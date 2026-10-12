@@ -1,49 +1,48 @@
 import React from 'react';
 import { useDrawing } from '../context/DrawingContext';
 
-export default function ToolBar({ onClearCanvas }) {
-  const { activeTool, setActiveTool } = useDrawing();
+export default function ToolBar() {
+  const { activeMode, setActiveMode, clearGlobalWorkspace } = useDrawing();
 
-  // List of primitive drawing shapes matching our database context
-  const primitiveTools = [
-    { id: 'LINE', label: '✏️ Draw Line' },
-    { id: 'CIRCLE', label: '⭕ Draw Circle' },
-    { id: 'RECTANGLE', label: '⬜ Draw Rectangle' }
+  const tools = [
+    { id: 'LINE', label: 'Draw Line', icon: '✏️' },
+    { id: 'CIRCLE', label: 'Draw Circle', icon: '⭕' },
+    { id: 'RECTANGLE', label: 'Draw Rectangle', icon: '📊' },
   ];
 
   return (
-    <div className="flex flex-wrap items-center justify-between bg-white border border-gray-200 rounded-lg p-3 shadow-sm max-w-4xl mx-auto gap-3 text-xs">
-      {/* Primitive Geometric Selector Suite */}
+    <div className="flex flex-wrap items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-200 max-w-4xl mx-auto my-4 gap-4">
       <div className="flex items-center gap-2">
-        <span className="font-bold text-gray-500 uppercase text-xxs tracking-wider mr-2">Geometric Tools:</span>
-        {primitiveTools.map((tool) => {
-          const isSelected = activeTool === tool.id;
-          return (
-            <button
-              key={tool.id}
-              onClick={() => setActiveTool(tool.id)}
-              className={`py-1.5 px-3 rounded font-bold transition uppercase tracking-wide text-xxs border
-                ${isSelected 
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
-                  : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
-                }
-              `}
-            >
-              {tool.label}
-            </button>
-          );
-        })}
+        <span className="text-xs font-bold text-slate-400 tracking-wider uppercase mr-2">
+          Geometric Tools:
+        </span>
+        <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
+          {tools.map((tool) => {
+            const isActive = activeMode === tool.id;
+            return (
+              <button
+                key={tool.id}
+                onClick={() => setActiveMode(tool.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-sm scale-105'
+                    : 'text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <span>{tool.icon}</span>
+                <span>{tool.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Global Canvas Utility Override Commands */}
-      <div className="flex items-center border-l border-gray-200 pl-3">
-        <button
-          onClick={onClearCanvas}
-          className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-1.5 px-3 rounded text-xxs uppercase tracking-wide transition"
-        >
-          🗑️ Clear Blueprint
-        </button>
-      </div>
+      <button
+        onClick={clearGlobalWorkspace}
+        className="px-4 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5"
+      >
+        🗑️ Clear Blueprint
+      </button>
     </div>
   );
 }

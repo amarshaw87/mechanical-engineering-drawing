@@ -6,7 +6,6 @@ export default function DrawingSheet() {
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
-  // Pull shared shapes database array directly from our global context stream
   const { 
     activeMode, 
     updateTelemetry, 
@@ -17,7 +16,6 @@ export default function DrawingSheet() {
   
   const { currentDraftShapeRef, drawAllVectorsToCanvas } = useDrawingEngine();
 
-  // Re-render vector layers whenever our shared context changes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -25,13 +23,20 @@ export default function DrawingSheet() {
     drawAllVectorsToCanvas(context, shapesHistory);
   }, [shapesHistory, drawAllVectorsToCanvas]);
 
+  // 🧲 SNAP FILTER: Math rounding equation forces pixels to align to the 20px grid layout squares
+  const snapToGridValue = (value, gridSize = 20) => {
+    return Math.round(value / gridSize) * gridSize;
+  };
+
   const handleMouseDown = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const calibratedX = e.clientX - rect.left;
-    const calibratedY = e.clientY - rect.top;
+    
+    // Apply snapping to the starting anchor point click!
+    const calibratedX = snapToGridValue(e.clientX - rect.left);
+    const calibratedY = snapToGridValue(e.clientY - rect.top);
 
     setIsDrawing(true);
 
@@ -54,8 +59,10 @@ export default function DrawingSheet() {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const calibratedX = e.clientX - rect.left;
-    const calibratedY = e.clientY - rect.top;
+    
+    // Continuous grid mapping calibration alignment filter 
+    const calibratedX = snapToGridValue(e.clientX - rect.left);
+    const calibratedY = snapToGridValue(e.clientY - rect.top);
 
     updateTelemetry(calibratedX, calibratedY);
 
@@ -76,14 +83,9 @@ export default function DrawingSheet() {
     setIsDrawing(false);
 
     if (currentDraftShapeRef.current) {
-      // 🟢 FIX: Create a shallow copy snapshot of the completed shape structure
-      // This protects the data from being wiped by the line below before React can save it!
       const completedShapeSnapshot = { ...currentDraftShapeRef.current };
-      
       setShapesHistory((prev) => [...prev, completedShapeSnapshot]);
       incrementVectorCount();
-      
-      // Now it is completely safe to wipe the draft layer back to null
       currentDraftShapeRef.current = null;
     }
   };

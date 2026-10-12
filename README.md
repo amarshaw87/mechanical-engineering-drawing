@@ -1,14 +1,23 @@
 # ⚙️ Mechanical Engineering Drawing Workspace
 
-A high-performance, precision 2D CAD Vector Drafting Web Application built with **React**, **HTML5 Canvas**, and **Tailwind CSS**. This software provides engineers and designers with a clean, low-latency browser blueprint interface to draft, track, and analyze geometric primitives down to the individual pixel.
+### 👤 Developer Profile & Academic Credentials
+* **Developer Name:** **Amar Shaw** ([@amarshaw87](https://github.com))
+* **Academic Background:** **Mechanical Engineering Student**
+* **Academic Timeline:** **Batch 2015 – 2018**
+* **Institution:** **Vidya Memorial Institute of Technology (VMIT), Ranchi**
 
-🚀 **Live Production Link:** [mechanical-engineering-drawing.vercel.app](https://vercel.app)
+---
+
+## 🚀 Project Overview
+This high-performance, precision **2D CAD Vector Drafting Web Application** bridges the gap between traditional mechanical engineering layout standards and modern tech software. It provides a low-latency, browser-based blueprint interface to draft, track, and analyze geometric primitives down to the individual pixel.
+
+🔗 **Live Production Link:** [mechanical-engineering-drawing.vercel.app](https://vercel.app)
 
 ---
 
 ## 🎨 Interactive Application Features
 
-* **Precision 2D CAD Engine:** Draft lines, circles, and rectangles smoothly at 60 FPS using an isolated structural rendering pipeline.
+* **Precision 2D CAD Engine:** Draft lines, circles, and rectangles smoothly at **60 FPS** using an isolated structural rendering pipeline.
 * **🧲 Smart Snap-to-Grid Array:** Mouse movements and click vectors automatically snap to the nearest `20px` layout intersection for flawless vertical, horizontal, and parallel alignments.
 * **🖥️ Real-Time Telemetry Monitor:** A dark-themed diagnostic panel streams live cursor crosshair coordinate metrics (`POINTER_X`, `POINTER_Y`) and tracks the total active `VECTOR_COUNT`.
 * **Asynchronous Buffer Protection:** Shallow structural memory snapshot cloning isolates draft preview paths from permanent historical databases, preventing vanished layers or data leakage.
@@ -24,7 +33,7 @@ A high-performance, precision 2D CAD Vector Drafting Web Application built with 
 ├── src/
 │   ├── components/
 │   │   ├── DrawingSheet.js  # Calibrated canvas sheet layer with grid-snap calculations
-│   │   ├── ToolBar.js       # Functional tool selectors & blueprint flushing commands
+│   │   ├── ToolBar.js       # Functional tool selectors, export utilities & clear commands
 │   │   └── Inspector.js     # Dark-themed mono-spaced telemetry monitoring dashboard
 │   ├── context/
 │   │   └── DrawingContext.js # Global context highway providing synchronized data states
@@ -51,11 +60,11 @@ A high-performance, precision 2D CAD Vector Drafting Web Application built with 
 
 ## 🔧 Local Development Installation Guide
 
-Follow these simple steps to run this drawing desk locally on your computer:
+Follow these steps to run this drawing workspace locally on your machine:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com
+   git clone https://github.com/mechanical-engineering-drawing.git
    cd mechanical-engineering-drawing
    ```
 
@@ -74,7 +83,7 @@ Follow these simple steps to run this drawing desk locally on your computer:
 
 ## 🚧 Project Status & Future Engineering Research
 
-⚠️ **Notice:** This application is **currently under active development**. Core vector drawing, layout synchronization, and grid-snapping are fully operational, but further research is ongoing to introduce deeper industrial CAD functionalities.
+⚠️ **Notice:** This application is **currently under active process and development**. Core vector drawing, layout synchronization, and grid-snapping are fully operational, but further research is ongoing to introduce deeper industrial CAD functionalities.
 
 ### 📐 Active Research & Upcoming Pipeline Upgrades:
 1. **Live Dimensional Labeling:** Integrating dynamic trigonometry text overlays to display active lengths, widths, and arc angles in metric/imperial values during click-drags.
@@ -82,5 +91,4 @@ Follow these simple steps to run this drawing desk locally on your computer:
 3. **Layer Control Dashboard:** Engineering an object tree timeline to let creators name, color-code, show, hide, or selectively delete individual shape indices from the master matrix array.
 
 ---
-*Designed & Engineered with 💡 by [Amar Shaw](https://github.com) | Mechanical Engineering Student, Batch 2015 - 2018, VMIT Ranchi.*
-
+*Designed & Engineered by [Amar Shaw](https://github.com) | Mechanical Engineering Student, Batch 2015 - 2018, VMIT Ranchi.*

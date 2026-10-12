@@ -1,19 +1,19 @@
-import React, { useEffect } from 'react';
-import { DrawingProvider } from './context/DrawingContext';
+import React from 'react';
+import { DrawingProvider, useDrawing } from './context/DrawingContext';
 import useDrawingEngine from './hooks/useDrawingEngine';
 import ToolBar from './components/ToolBar';
 import DrawingSheet from './components/DrawingSheet';
 import Inspector from './components/Inspector';
 
 function MechanicalDrawingWorkspace() {
-  // Extract hook capabilities to bind downstream layouts natively
-  const {
-    shapesHistory,
-    setShapesHistory,
-    currentDraftShapeRef,
-    clearCanvasVectorGrid,
-    drawAllVectorsToCanvas
-  } = useDrawingEngine();
+  // 1. Pull the master shape database directly out of your global context manager
+  const { shapesHistory } = useDrawing();
+
+  // 2. Pull calculations handlers out of your engine hook layout cleanly
+  const { drawAllVectorsToCanvas, currentDraftShapeRef } = useDrawingEngine();
+
+  // Safely calculate array length with a fallback to protect against empty arrays
+  const totalShapesCount = Array.isArray(shapesHistory) ? shapesHistory.length : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 font-sans text-xs">
@@ -30,7 +30,7 @@ function MechanicalDrawingWorkspace() {
         </header>
 
         {/* Operational Task Controller Strip */}
-        <ToolBar onClearCanvas={clearCanvasVectorGrid} />
+        <ToolBar />
 
         {/* Primary Functional Interface Split Row Layout */}
         <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -40,13 +40,13 @@ function MechanicalDrawingWorkspace() {
             <DrawingSheet
               drawAllVectorsToCanvas={drawAllVectorsToCanvas}
               currentDraftShapeRef={currentDraftShapeRef}
-              setShapesHistory={setShapesHistory}
             />
           </div>
 
           {/* Side Structural Metadata Telemetry Panel */}
           <div className="w-full md:w-auto">
-            <Inspector totalShapes={shapesHistory.length} />
+            {/* Pass the safe length tracker right into the monitor card block */}
+            <Inspector totalShapes={totalShapesCount} />
           </div>
 
         </div>
@@ -56,7 +56,7 @@ function MechanicalDrawingWorkspace() {
   );
 }
 
-// Final wrapper layer joining your components with the global context highway mesh
+// Final wrapper layer joining your components with the global context provider framework
 export default function App() {
   return (
     <DrawingProvider>

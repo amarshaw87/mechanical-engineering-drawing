@@ -76,8 +76,14 @@ export default function DrawingSheet() {
     setIsDrawing(false);
 
     if (currentDraftShapeRef.current) {
-      setShapesHistory((prev) => [...prev, currentDraftShapeRef.current]);
+      // 🟢 FIX: Create a shallow copy snapshot of the completed shape structure
+      // This protects the data from being wiped by the line below before React can save it!
+      const completedShapeSnapshot = { ...currentDraftShapeRef.current };
+      
+      setShapesHistory((prev) => [...prev, completedShapeSnapshot]);
       incrementVectorCount();
+      
+      // Now it is completely safe to wipe the draft layer back to null
       currentDraftShapeRef.current = null;
     }
   };

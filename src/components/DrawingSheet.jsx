@@ -1,102 +1,111 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useDrawing } from '../context/DrawingContext';
+import useDrawingEngine from '../hooks/useDrawingEngine';
 
-export default function DrawingSheet({ drawAllVectorsToCanvas, currentDraftShapeRef, setShapesHistory }) {
-  const sheetRef = useRef(null);
-  const contextRef = useRef(null);
+export default function DrawingSheet() {
+  const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+
+  // Pull functions directly from your Context Provider
+  const { activeMode, updateTelemetry, incrementVectorCount } = useDrawing();
   
-  const { activeTool, updateTelemetry } = useDrawing();
+  // Pull functions directly from your Drawing Engine Hook
+  const { 
+    shapes,              // Matched to your exact variable name
+    setShapes,           // Matched to your exact variable name
+    currentDraftShapeRef, 
+    drawAllVectorsToCanvas 
+  } = useDrawingEngine();
 
-  // Initialize and scale the HTML5 2D render context
+  // Redraw the canvas whenever your shapes database changes
   useEffect(() => {
-    const sheet = sheetRef.current;
-    sheet.width = sheet.parentElement.clientWidth;
-    sheet.height = 450; // Standard layout pixel boundary
-
-    const context = sheet.getContext('2d');
-    contextRef.current = context;
-    
-    // Perform initial clear frame repaint
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext('2d');
     drawAllVectorsToCanvas(context);
-  }, []);
+  }, [shapes, drawAllVectorsToCanvas]); // Redraw on shape changes
 
-  // Frame monitor loop: Trigger grid redraw sequence whenever a draft update changes
-  const updateDisplayFrame = () => {
-    if (contextRef.current) {
-      drawAllVectorsToCanvas(contextRef.current);
-    }
-  };
+  const handleMouseDown = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  // Extract relative localized layout boundaries from raw screen cursor clicks
-  const getCoordinates = (e) => {
-    const sheet = sheetRef.current;
-    const rect = sheet.getBoundingClientRect();
-    return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
-  };
+    // Calculate canvas bounding area to fix the coordinate offset bug
+    const rect = canvas.getBoundingClientRect();
+    const calibratedX = e.clientX - rect.left;
+    const calibratedY = e.clientY - rect.top;
 
-  // Mouse Pressed Down Event Sequence Trigger
-  const handlePointerDown = (e) => {
-    const coords = getCoordinates(e);
     setIsDrawing(true);
-    setStartPos(coords);
+    setStartPos({ x: calibratedX, y: calibratedY });
 
-    // Seed temporary vector reference blueprint values
     currentDraftShapeRef.current = {
-      type: activeTool,
-      startX: coords.x,
-      startY: coords.y,
-      endX: coords.x,
-      endY: coords.y
+      type: activeMode,
+      startX: calibratedX,
+      startY: calibratedY,
+      endX: calibratedX,
+      endY: calibratedY,
     };
-    updateDisplayFrame();
+
+    updateTelemetry(calibratedX, calibratedY);
+    
+    const context = canvas.getContext('2d');
+    drawAllVectorsToCanvas(context);
   };
 
-  // Mouse Moving Over Grid Event Sequence Trigger
-  const handlePointerMove = (e) => {
-    const coords = getCoordinates(e);
-    updateTelemetry(coords.x, coords.y); // Sync data channel telemetry readout streams
+  const handleMouseMove = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const calibratedX = e.clientX - rect.left;
+    const calibratedY = e.clientY - rect.top;
+
+    // Send coordinates to the dark telemetry monitor screen block
+    updateTelemetry(calibratedX, calibratedY);
 
     if (!isDrawing) return;
 
-    // Mutate draft coordinate matrix array variables live on drag
-    if (currentDraftShapeRef.current) {
-      currentDraftShapeRef.current.endX = coords.x;
-      currentDraftShapeRef.current.endY = coords.y;
-    }
-    updateDisplayFrame();
+    currentDraftShapeRef.current = {
+      ...currentDraftShapeRef.current,
+      endX: calibratedX,
+      endY: calibratedY,
+    };
+
+    const context = canvas.getContext('2d');
+    drawAllVectorsToCanvas(context);
   };
 
-  // Mouse Released Event Sequence Trigger
-  const handlePointerUp = () => {
+  const handleMouseUp = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
 
-    // Commit transient draft parameters safely to permanent shapes database history array
     if (currentDraftShapeRef.current) {
-      setShapesHistory((prev) => [...prev, currentDraftShapeRef.current]);
-      currentDraftShapeRef.current = null; // Clean active reference path register
+      // Add the finished draft into your shape history array
+      setShapes((prev) => [...prev, currentDraftShapeRef.current]);
+      incrementVectorCount();
+      
+      currentDraftShapeRef.current = null;
     }
-    updateDisplayFrame();
   };
 
   return (
-    <div className="w-full bg-white border border-gray-300 rounded-lg shadow-inner overflow-hidden relative">
-      {/* Absolute layout alignment grid backdrop for clean mechanical drawing context orientation */}
-      <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:20px_20px] opacity-70"></div>
-      
-      <canvas
-        ref={sheetRef}
-        onMouseDown={handlePointerDown}
-        onMouseMove={handlePointerMove}
-        onMouseUp={handlePointerUp}
-        onMouseLeave={handlePointerUp}
-        className="block w-full relative z-10 cursor-crosshair bg-transparent"
-      />
+    <div className="flex justify-center my-6">
+      <div className="relative border border-slate-200 rounded-lg shadow-inner bg-white overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          width={800}
+          height={450}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          className="cursor-crosshair block"
+          style={{
+            backgroundImage: 'linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+      </div>
     </div>
   );
 }

@@ -156,4 +156,5 @@ Follow these simple steps to run this drawing desk locally on your computer:
 3. **Layer Control Dashboard:** Engineering an object tree timeline to let creators name, color-code, show, hide, or selectively delete individual shape indices from the master matrix array.
 
 ---
-*Designed & Engineered with 💡 by [Amar Shaw](https://github.com).*
+*Designed & Engineered with 💡 by [Amar Shaw](https://github.com) | Mechanical Engineering Student, Batch 2015 - 2018, VMIT.*
+

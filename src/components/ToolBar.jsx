@@ -2,7 +2,6 @@ import React from 'react';
 import { useDrawing } from '../context/DrawingContext';
 
 export default function ToolBar() {
-  // Pull shapesHistory along with your active tool modes from context
   const { activeMode, setActiveMode, clearGlobalWorkspace, shapesHistory } = useDrawing();
 
   const tools = [
@@ -11,17 +10,16 @@ export default function ToolBar() {
     { id: 'RECTANGLE', label: 'Draw Rectangle', icon: '📊' },
   ];
 
-  // 💾 EXPORTER ALGORITHM: Converts vector coordinate objects into a raw downloadable SVG file
   const handleExportSVG = () => {
     if (!shapesHistory || shapesHistory.length === 0) {
       alert("Please draw an engineering shape on the workspace before exporting!");
       return;
     }
 
-    // Initialize SVG wrapper shell matching your exact 800x450 dark AutoCAD dimensions
-    let svgString = `<svg xmlns="http://w3.org" viewBox="0 0 800 450" width="800" height="450" style="background:#1e232d;">`;
+    // 🟢 FIX: Prepend the standard XML declaration header so browsers render the image visually
+    let svgString = `<?xml version="1.0" encoding="utf-8"?>\n`;
+    svgString += `<svg xmlns="http://w3.org" viewBox="0 0 800 450" width="800" height="450" style="background:#1e232d;">`;
 
-    // Loop through your database records and convert them into raw XML tags
     shapesHistory.forEach((shape) => {
       if (shape.type === 'LINE') {
         svgString += `\n  <line x1="${shape.startX}" y1="${shape.startY}" x2="${shape.endX}" y2="${shape.endY}" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>`;
@@ -43,7 +41,6 @@ export default function ToolBar() {
 
     svgString += `\n</svg>`;
 
-    // Generate a secure local browser memory blob stream to execute the file download download
     const fileBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
     const downloadBlobUrl = URL.createObjectURL(fileBlob);
     
@@ -54,7 +51,6 @@ export default function ToolBar() {
     document.body.appendChild(operationalLink);
     operationalLink.click();
     
-    // Cleanup temporary browser memory pointers
     document.body.removeChild(operationalLink);
     URL.revokeObjectURL(downloadBlobUrl);
   };
@@ -86,9 +82,7 @@ export default function ToolBar() {
         </div>
       </div>
 
-      {/* Action Utility Buttons Tray */}
       <div className="flex items-center gap-2">
-        {/* New 💾 Export SVG Trigger Button */}
         <button
           onClick={handleExportSVG}
           className="px-4 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-bold text-xs rounded-lg transition-colors flex items-center gap-1.5"

@@ -5,14 +5,19 @@ import useDrawingEngine from '../hooks/useDrawingEngine';
 export default function DrawingSheet() {
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  
-  // Local state tracking ensures instant updates without global lag loops
-  const [shapesHistory, setShapesHistory] = useState([]);
 
-  const { activeMode, updateTelemetry, incrementVectorCount } = useDrawing();
+  // Pull shared shapes database array directly from our global context stream
+  const { 
+    activeMode, 
+    updateTelemetry, 
+    incrementVectorCount, 
+    shapesHistory, 
+    setShapesHistory 
+  } = useDrawing();
+  
   const { currentDraftShapeRef, drawAllVectorsToCanvas } = useDrawingEngine();
 
-  // Redraw every time a permanent vector shape gets committed
+  // Re-render vector layers whenever our shared context changes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;

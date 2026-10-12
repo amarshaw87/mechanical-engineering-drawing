@@ -5,25 +5,20 @@ import useDrawingEngine from '../hooks/useDrawingEngine';
 export default function DrawingSheet() {
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
-
-  // Access global CAD configuration parameters from React state stream context
-  const { activeMode, updateTelemetry, incrementVectorCount } = useDrawing();
   
-  // Initialize calculations logic from your mathematical engine hook pipeline
-  const { 
-    shapesHistory,
-    setShapesHistory, 
-    currentDraftShapeRef, 
-    drawAllVectorsToCanvas 
-  } = useDrawingEngine();
+  // Local state tracking ensures instant updates without global lag loops
+  const [shapesHistory, setShapesHistory] = useState([]);
 
-  // WATCH FIX: Watch history array directly instead of tracking the drawing engine function itself
+  const { activeMode, updateTelemetry, incrementVectorCount } = useDrawing();
+  const { currentDraftShapeRef, drawAllVectorsToCanvas } = useDrawingEngine();
+
+  // Redraw every time a permanent vector shape gets committed
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext('2d');
-    drawAllVectorsToCanvas(context);
-  }, [shapesHistory]); // Safe boundary watch execution 
+    drawAllVectorsToCanvas(context, shapesHistory);
+  }, [shapesHistory, drawAllVectorsToCanvas]);
 
   const handleMouseDown = (e) => {
     const canvas = canvasRef.current;
@@ -46,7 +41,7 @@ export default function DrawingSheet() {
     updateTelemetry(calibratedX, calibratedY);
     
     const context = canvas.getContext('2d');
-    drawAllVectorsToCanvas(context);
+    drawAllVectorsToCanvas(context, shapesHistory);
   };
 
   const handleMouseMove = (e) => {
@@ -68,7 +63,7 @@ export default function DrawingSheet() {
     };
 
     const context = canvas.getContext('2d');
-    drawAllVectorsToCanvas(context);
+    drawAllVectorsToCanvas(context, shapesHistory);
   };
 
   const handleMouseUp = () => {
